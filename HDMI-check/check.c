@@ -85,29 +85,22 @@ int is_hdmi_event(char *buffer, int len)
 {
     int i = 0;
     int is_drm = 0;
-    int is_hdmi = 0;
+    int is_hotplug = 0;
 
-    // while (i < len)
-    // {
-    //     if (strcmp(&buffer[i], "SUBSYSTEM=drm") == 0)
-    //     {
-    //         is_drm = 1;
-    //         printf("is_drm = %d", is_drm);
-    //     }
 
-    //     if (strstr(&buffer[i], "card1-HDMI-A-1") != NULL)
-    //     {
-    //         is_hdmi = 1;
-    //         printf("is_hdmi = %d", is_hdmi);
-    //     }
-            
-    //     i += strlen(&buffer[i]) + 1;
-    // }
+    while (i < len)
+    {
+        printf("buffer: %s\n", &buffer[i]);
+        if (strcmp(&buffer[i], "SUBSYSTEM=drm") == 0)
+            is_drm = 1;
 
-    if (strstr(buffer, "drm") != NULL)
-        return 1;
+        if (strcmp(&buffer[i], "HOTPLUG=1") == 0)
+            is_hotplug = 1;
 
-    // return is_drm && is_hdmi;
+        i += strlen(&buffer[i]) + 1;
+    }
+
+    return is_drm && is_hotplug;
 }
 
 int main(void)
@@ -152,7 +145,6 @@ int main(void)
     while (1)
     {
         recv_len = recv(sock_fd, buffer, sizeof(buffer) - 1, 0);
-        printf("buffer: %s\n", buffer);
 
         if (recv_len <= 0)
             continue;
