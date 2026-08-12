@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <linux/netlink.h>
 #include <gpiod.h>
 
 struct gpiod_line_request *gpio_request;
@@ -47,18 +49,124 @@ void gpio_write(unsigned int gpio, int value)
         gpiod_line_request_set_value(gpio_request, gpio, GPIOD_LINE_VALUE_INACTIVE);
 }
 
-int main() 
+void update_hdmi_status(void)
 {
-    unsigned int led_gpio = 26;
+    FILE *fp;
+    char status[32];
 
-    if (gpio_init("/dev/gpiochip0", led_gpio) != 0)
+    fp = fopen("/sys/class/drm/card1-HDMI-A-1/status", "r");
+
+    if (!fp)
+    {
+        printf("Failed to open HDMI status\n");
+        return;
+    }
+
+    if (fgets(status, sizeof(status), fp))
+    {
+        status[strcspn(status, "\r\n")] = '\0';
+
+        if (strcmp(status, "connected") == 0)
+        {
+            printf("HDMI connected\n");
+            gpio_write(26, 1);
+        }
+        else if (strcmp(status, "disconnected") == 0)
+        {
+            printf("HDMI disconnected\n");
+            gpio_write(26, 0);
+        }
+    }
+
+    fclose(fp);
+}
+
+int is_hdmi_event(char *buffer, int len)
+{
+    int i = 0;
+    int is_drm = 0;
+    int is_hdmi = 0;
+
+    // while (i < len)
+    // {
+    //     if (strcmp(&buffer[i], "SUBSYSTEM=drm") == 0)
+    //     {
+    //         is_drm = 1;
+    //         printf("is_drm = %d", is_drm);
+    //     }
+
+    //     if (strstr(&buffer[i], "card1-HDMI-A-1") != NULL)
+    //     {
+    //         is_hdmi = 1;
+    //         printf("is_hdmi = %d", is_hdmi);
+    //     }
+            
+    //     i += strlen(&buffer[i]) + 1;
+    // }
+
+    if (strstr(buffer, "drm") != NULL)
+        return 1;
+
+    // return is_drm && is_hdmi;
+}
+
+int main(void)
+{
+    int sock_fd;
+    int recv_len;
+    char buffer[4096];
+
+    struct sockaddr_nl addr;
+
+    if (gpio_init("/dev/gpiochip0", 26) != 0)
     {
         printf("GPIO init failed\n");
         return 1;
     }
 
-    while(1)
+    sock_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+
+    if (sock_fd < 0)
     {
-        
+        printf("socket failed\n");
+        return 1;
     }
+
+    memset(&addr, 0, sizeof(addr));
+
+    addr.nl_family = AF_NETLINK;
+    addr.nl_pid = getpid();
+    addr.nl_groups = 1;
+
+    if (bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        printf("bind failed\n");
+        return 1;
+    }
+
+    // 開機先讀一次目前狀態
+    update_hdmi_status();
+
+    printf("Waiting for HDMI hotplug event...\n");
+
+    while (1)
+    {
+        recv_len = recv(sock_fd, buffer, sizeof(buffer) - 1, 0);
+        printf("buffer: %s\n", buffer);
+
+        if (recv_len <= 0)
+            continue;
+
+        buffer[recv_len] = '\0';
+
+        if (is_hdmi_event(buffer, recv_len))
+        {
+            printf("HDMI event detected\n");
+            update_hdmi_status();
+        }
+    }
+
+    close(sock_fd);
+
+    return 0;
 }
