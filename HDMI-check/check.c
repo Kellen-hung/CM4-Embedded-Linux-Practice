@@ -26,6 +26,7 @@ int gpio_init(const char *chip_path, unsigned int gpio)
     if (!chip)
     {
         printf("gpiod_chip_open() failed\n");
+        
         return -1;
     }
         
@@ -36,6 +37,7 @@ int gpio_init(const char *chip_path, unsigned int gpio)
     if (!settings || !line_cfg)
     {
         printf("gpiod_line_settings_new() or gpiod_line_config_new() failed\n");
+        
         return -1;
     }
 
@@ -45,6 +47,7 @@ int gpio_init(const char *chip_path, unsigned int gpio)
     if (gpiod_line_config_add_line_settings(line_cfg, &gpio, 1, settings))
     {
         printf("gpiod_line_config_add_line_settings() failed\n");
+        
         return -1;
     }
 
@@ -57,6 +60,7 @@ int gpio_init(const char *chip_path, unsigned int gpio)
     if (!gpio_request)
     {
         printf("gpiod_chip_request_lines() failed\n");
+        
         return -1;
     }
 
@@ -81,6 +85,7 @@ void update_hdmi_status(void)
     if (!fp)
     {
         printf("Failed to open HDMI status\n");
+        
         return;
     }
 
@@ -91,11 +96,13 @@ void update_hdmi_status(void)
         if (strcmp(status, "connected") == 0)
         {
             printf("HDMI connected\n");
+            
             gpio_write(26, 1);
         }
         else if (strcmp(status, "disconnected") == 0)
         {
             printf("HDMI disconnected\n");
+            
             gpio_write(26, 0);
         }
     }
@@ -132,6 +139,8 @@ int main(void)
 
     struct sockaddr_nl addr;
 
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     // signal
     struct sigaction sa;
 
@@ -148,6 +157,7 @@ int main(void)
     if (gpio_init("/dev/gpiochip0", 26) != 0)
     {
         printf("GPIO init failed\n");
+        
         return 1;
     }
 
@@ -157,6 +167,7 @@ int main(void)
     if (sock_fd < 0)
     {
         printf("socket failed\n");
+        
         return 1;
     }
 
@@ -176,6 +187,7 @@ int main(void)
     update_hdmi_status();
 
     printf("Waiting for HDMI hotplug event...\n");
+    
 
     while (running)
     {
@@ -196,6 +208,7 @@ int main(void)
         if (is_hdmi_event(buffer, recv_len))
         {
             printf("HDMI event detected\n");
+            
             update_hdmi_status();
         }
     }
@@ -210,6 +223,7 @@ int main(void)
     }
 
     printf("\nProgram stopped!\n");
+    
 
     return 0;
 }
