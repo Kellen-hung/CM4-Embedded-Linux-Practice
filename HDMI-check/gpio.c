@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 #include <gpiod.h>
+#include "gpio.h"
 
-struct gpiod_line_request *gpio_request;
+static struct gpiod_line_request *gpio_request;
 
 int gpio_init(const char *chip_path, unsigned int gpio)
 {
@@ -47,18 +45,11 @@ void gpio_write(unsigned int gpio, int value)
         gpiod_line_request_set_value(gpio_request, gpio, GPIOD_LINE_VALUE_INACTIVE);
 }
 
-int main() 
+void gpio_cleanup(void)
 {
-    unsigned int led_gpio = 26;
-
-    if (gpio_init("/dev/gpiochip0", led_gpio) != 0)
+    if (gpio_request)
     {
-        printf("GPIO init failed\n");
-        return 1;
-    }
-
-    while(1)
-    {
-        
+        gpiod_line_request_release(gpio_request);
+        gpio_request = NULL;
     }
 }
