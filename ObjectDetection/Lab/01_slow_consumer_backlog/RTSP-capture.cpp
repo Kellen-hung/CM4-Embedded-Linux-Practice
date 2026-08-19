@@ -1,6 +1,5 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
-// #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
@@ -30,18 +29,6 @@ int main(int argc, char *argv[])
         "videoconvert ! "
         "video/x-raw,format=BGR ! "
         "appsink name=sink max-buffers=1 drop=true";
-
-    // // no drop pipeline
-    // std::string pipeline_str =
-    //     "videotestsrc is-live=true ! "
-    //     "video/x-raw,framerate=15/1 ! "
-    //     "appsink name=sink";
-
-    // // having drop pipeline
-    // std::string pipeline_str =
-    //     "videotestsrc is-live=true ! "
-    //     "video/x-raw,framerate=15/1 ! "
-    //     "appsink name=sink max-buffers=1 drop=true";
 
     GError *error = nullptr;
 

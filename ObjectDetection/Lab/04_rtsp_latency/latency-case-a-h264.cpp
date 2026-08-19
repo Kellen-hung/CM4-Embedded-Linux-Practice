@@ -34,18 +34,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // std::string pipeline_str =
-    //     "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=0 protocols=tcp ! "
-    //     "application/x-rtp,media=video,encoding-name=H264 ! "
-    //     "rtph264depay wait-for-keyframe=true request-keyframe=true ! "
-    //     "video/x-h264,alignment=au ! "
-    //     "h264parse ! "
-    //     "avdec_h264 ! "
-    //     "queue name=convert_q max-size-buffers=1 max-size-bytes=0 max-size-time=0 ! "
-    //     "videoconvert ! "
-    //     "video/x-raw,format=BGR ! "
-    //     "appsink name=sink";
-
     std::string pipeline_str =
         "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=0 protocols=tcp ! "
         "application/x-rtp,media=video,encoding-name=H264 ! "

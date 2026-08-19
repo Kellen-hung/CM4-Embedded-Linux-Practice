@@ -1,6 +1,5 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
-// #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
@@ -37,29 +36,6 @@ int main(int argc, char *argv[])
     }
 
     // create pipeline
-    // std::string pipeline_str =
-    //     "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=200 protocols=tcp ! "
-    //     "application/x-rtp,media=video,encoding-name=H264 ! "
-    //     "rtph264depay wait-for-keyframe=true request-keyframe=true ! "
-    //     "video/x-h264,alignment=au ! "
-    //     "h264parse ! "
-    //     "avdec_h264 ! "
-    //     "videoconvert ! "
-    //     "video/x-raw,format=BGR ! "
-    //     "appsink name=sink";
-
-    // std::string pipeline_str =
-    //     "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=200 protocols=tcp ! "
-    //     "application/x-rtp,media=video,encoding-name=H264 ! "
-    //     "rtph264depay wait-for-keyframe=true request-keyframe=true ! "
-    //     "video/x-h264,alignment=au ! "
-    //     "h264parse ! "
-    //     "avdec_h264 ! "
-    //     "queue name=convert_q max-size-buffers=1 max-size-bytes=0 max-size-time=0 ! "
-    //     "videoconvert ! "
-    //     "video/x-raw,format=BGR ! "
-    //     "appsink name=sink";
-        
     std::string pipeline_str =
         "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=200 protocols=tcp ! "
         "application/x-rtp,media=video,encoding-name=H264 ! "
@@ -155,63 +131,7 @@ int main(int argc, char *argv[])
 
         gst_sample_unref(sample);
     }
-
-    // std::cout << "Got sample" << std::endl;
-
-    // // get bytes from buffer
-    // GstBuffer *buffer = gst_sample_get_buffer(sample);
-
-    // if (buffer == nullptr) {
-    //     std::cerr << "Failed to get buffer" << std::endl;
-
-    //     gst_sample_unref(sample);
-    //     gst_object_unref(sink);
-    //     gst_element_set_state(pipeline, GST_STATE_NULL);
-    //     gst_object_unref(pipeline);
-
-    //     return 1;
-    // }
-
-    // gsize buffer_size = gst_buffer_get_size(buffer);
-
-    // std::cout << "Buffer size: " << buffer_size << " bytes" << std::endl;
-
-    // // convert to c++ readable (map)
-    // GstMapInfo map;
-
-    // if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
-    //     std::cerr << "Failed to map buffer" << std::endl;
-
-    //     gst_sample_unref(sample);
-    //     gst_object_unref(sink);
-    //     gst_element_set_state(pipeline, GST_STATE_NULL);
-    //     gst_object_unref(pipeline);
-
-    //     return 1;
-    // }
-
-    // std::cout << "Mapped size: " << map.size << " bytes" << std::endl;
-    // std::cout << "Data pointer: " << static_cast<void *>(map.data) << std::endl;
-
-    // // opencv rule (frame = 1920*3840*3, uint8 when it is reading from map.data)
-    // cv::Mat frame(1920, 3840, CV_8UC3, map.data);
-
-    // std::cout << "Frame rows: " << frame.rows << std::endl;
-    // std::cout << "Frame cols: " << frame.cols << std::endl;
-    // std::cout << "Frame channels: " << frame.channels() << std::endl;
-
-    // if (!cv::imwrite("output/gstreamer_capture.jpg", frame)) {
-    //     std::cerr << "Failed to save image" << std::endl;
-    // } 
-    // else {
-    //     std::cout << "Saved: output/gstreamer_capture.jpg" << std::endl;
-    // }
-
-    // gst_buffer_unmap(buffer, &map);
-
-    // end
-    // gst_sample_unref(sample);
-
+    
     std::cout << "\nStopping pipeline..." << std::endl;
 
     gst_object_unref(sink);
