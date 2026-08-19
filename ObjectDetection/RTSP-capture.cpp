@@ -127,12 +127,7 @@ int main(int argc, char *argv[])
     std::cout << "Data pointer: " << static_cast<void *>(map.data) << std::endl;
 
     // opencv rule (frame = 1920*3840*3, uint8 when it is reading from map.data)
-    cv::Mat frame(
-        1920,
-        3840,
-        CV_8UC3,
-        map.data
-    );
+    cv::Mat frame(1920, 3840, CV_8UC3, map.data);
 
     std::cout << "Frame rows: " << frame.rows << std::endl;
     std::cout << "Frame cols: " << frame.cols << std::endl;
@@ -140,7 +135,8 @@ int main(int argc, char *argv[])
 
     if (!cv::imwrite("output/gstreamer_capture.jpg", frame)) {
         std::cerr << "Failed to save image" << std::endl;
-    } else {
+    } 
+    else {
         std::cout << "Saved: output/gstreamer_capture.jpg" << std::endl;
     }
 

@@ -20,16 +20,16 @@ int main(int argc, char *argv[])
     }
 
     // create pipeline
-    // std::string pipeline_str =
-    //     "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=200 protocols=tcp ! "
-    //     "application/x-rtp,media=video,encoding-name=H264 ! "
-    //     "rtph264depay wait-for-keyframe=true request-keyframe=true ! "
-    //     "video/x-h264,alignment=au ! "
-    //     "h264parse ! "
-    //     "avdec_h264 ! "
-    //     "videoconvert ! "
-    //     "video/x-raw,format=BGR ! "
-    //     "appsink name=sink";
+    std::string pipeline_str =
+        "rtspsrc location=\"" + std::string(rtsp_url) + "\" latency=200 drop-on-latency=true protocols=tcp ! "
+        "application/x-rtp,media=video,encoding-name=H264 ! "
+        "rtph264depay wait-for-keyframe=true request-keyframe=true ! "
+        "video/x-h264,alignment=au ! "
+        "h264parse ! "
+        "avdec_h264 ! "
+        "videoconvert ! "
+        "video/x-raw,format=BGR ! "
+        "appsink name=sink max-buffers=1 drop=true";
 
     // // no drop pipeline
     // std::string pipeline_str =
@@ -37,11 +37,11 @@ int main(int argc, char *argv[])
     //     "video/x-raw,framerate=15/1 ! "
     //     "appsink name=sink";
 
-    // having drop pipeline
-    std::string pipeline_str =
-        "videotestsrc is-live=true ! "
-        "video/x-raw,framerate=15/1 ! "
-        "appsink name=sink max-buffers=1 drop=true";
+    // // having drop pipeline
+    // std::string pipeline_str =
+    //     "videotestsrc is-live=true ! "
+    //     "video/x-raw,framerate=15/1 ! "
+    //     "appsink name=sink max-buffers=1 drop=true";
 
     GError *error = nullptr;
 
