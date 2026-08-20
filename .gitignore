@@ -1,1 +1,35 @@
 *.o
+
+# Lab 06 - model comparison datasets / generated images
+ObjectDetection/Lab/06_model_comparison/*.jpg
+ObjectDetection/Lab/06_model_comparison/*.png
+ObjectDetection/Lab/06_model_comparison/results-img/
+ObjectDetection/Lab/06_model_comparison/calibration/**/*.jpg
+ObjectDetection/Lab/06_model_comparison/calibration/**/*.jpeg
+ObjectDetection/Lab/06_model_comparison/calibration/**/*.png
+
+# Local compiled binaries
+ObjectDetection/Lab/06_model_comparison/calibration/collect_calibration
+
+# Calibration datasets
+ObjectDetection/Lab/06_model_comparison/calibration/raw/
+ObjectDetection/Lab/06_model_comparison/calibration/dewarp/
+ObjectDetection/Lab/06_model_comparison/calibration/416/
+ObjectDetection/Lab/06_model_comparison/calibration/scene_416_old/
+ObjectDetection/Lab/06_model_comparison/calibration/coco/
+ObjectDetection/Lab/06_model_comparison/calibration/coco_416/
+ObjectDetection/Lab/06_model_comparison/calibration/mixed_416/
+ObjectDetection/Lab/06_model_comparison/calibration/*.txt
+
+# Model weights / generated quantized models
+ObjectDetection/Lab/06_model_comparison/models/**/*.onnx
+ObjectDetection/Lab/06_model_comparison/models/**/*.bin
+ObjectDetection/Lab/06_model_comparison/models/**/*.table
+ObjectDetection/Lab/06_model_comparison/models/*.onnx
+ObjectDetection/Lab/06_model_comparison/models/*.bin
+ObjectDetection/Lab/06_model_comparison/models/*.table
+
+# Python
+__pycache__/
+*.pyc
+.venv/
