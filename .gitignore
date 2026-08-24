@@ -29,6 +29,17 @@ ObjectDetection/Lab/06_model_comparison/models/*.onnx
 ObjectDetection/Lab/06_model_comparison/models/*.bin
 ObjectDetection/Lab/06_model_comparison/models/*.table
 
+# Lab 07 build outputs
+ObjectDetection/Lab/07_rtsp_yolox/build*/
+ObjectDetection/Lab/07_rtsp_yolox/images/
+ObjectDetection/Lab/07_rtsp_yolox/*.jpg
+
+# Lab 07 executables
+ObjectDetection/Lab/07_rtsp_yolox/benchmark_yolox_cpp
+ObjectDetection/Lab/07_rtsp_yolox/dewarp
+ObjectDetection/Lab/07_rtsp_yolox/rtsp_dewarp_round_robin
+ObjectDetection/Lab/07_rtsp_yolox/rtsp_yolox_round_robin
+
 # Python
 __pycache__/
 *.pyc
