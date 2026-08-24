@@ -44,6 +44,8 @@ ObjectDetection/Lab/07_rtsp_yolox/rtsp_yolox_round_robin
 ObjectDetection/Lab/08_gpu_inference/build/
 ObjectDetection/Lab/08_gpu_inference/models/
 
+# Lab 08
+ObjectDetection/Lab/09_hw_decode/build-opencv5/
 
 # Python
 __pycache__/
