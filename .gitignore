@@ -1,5 +1,9 @@
 *.o
 
+# ObjectDetection integration build and local model weights
+ObjectDetection/build/
+ObjectDetection/models/*.onnx
+
 # Lab 06 - model comparison datasets / generated images
 ObjectDetection/Lab/06_model_comparison/*.jpg
 ObjectDetection/Lab/06_model_comparison/*.png
