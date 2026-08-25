@@ -84,6 +84,7 @@ RtspCapture::RtspCapture(const std::string& url, Decoder decoder) : impl_(std::m
 
     GError* error = nullptr;
     impl_->pipeline = gst_parse_launch(pipeline_description.c_str(), &error);
+
     if (error) {
         const std::string message = error->message;
         if (impl_->pipeline) {
@@ -93,10 +94,11 @@ RtspCapture::RtspCapture(const std::string& url, Decoder decoder) : impl_(std::m
         g_error_free(error);
         throw std::runtime_error("Failed to create GStreamer pipeline: " + message);
     }
+
     if (!impl_->pipeline)
         throw std::runtime_error("Failed to create GStreamer pipeline: unknown error");
-
     impl_->sink_element = gst_bin_get_by_name(GST_BIN(impl_->pipeline), "sink");
+
     if (!impl_->sink_element)
         throw std::runtime_error("GStreamer pipeline has no appsink named sink");
     impl_->sink = GST_APP_SINK(impl_->sink_element);

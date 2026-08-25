@@ -15,17 +15,17 @@ struct DetectionResult {
 };
 
 class YoloXDetector {
-public:
-    explicit YoloXDetector(const std::string& model_path);
-    DetectionResult detect(const cv::Mat& perspective_view);
+    public:
+        explicit YoloXDetector(const std::string& model_path);
+        DetectionResult detect(const cv::Mat& perspective_view);
 
-private:
-    void buildGrid();
-    std::vector<Detection> postprocess(const cv::Mat& output) const;
+    private:
+        void buildGrid();
+        std::vector<Detection> postprocess(const cv::Mat& output) const;
 
-    cv::dnn::Net net_;
-    cv::Mat canvas_;
-    std::vector<float> grid_x_;
-    std::vector<float> grid_y_;
-    std::vector<float> strides_;
+        cv::dnn::Net net_;
+        cv::Mat canvas_;
+        std::vector<float> grid_x_;
+        std::vector<float> grid_y_;
+        std::vector<float> strides_;
 };

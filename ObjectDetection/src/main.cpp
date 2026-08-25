@@ -5,12 +5,17 @@
 #include "yolox_detector.hpp"
 
 #include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <csignal>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -49,6 +54,25 @@ const char* className(int class_id)
     return NAMES[class_id];
 }
 
+void saveDebugImage(cv::Mat& perspective, const DetectionResult& result, int view_id)
+{
+    for (const auto& detection : result.detections) {
+        cv::rectangle(perspective, detection.box, cv::Scalar(0, 255, 0), 2);
+
+        const std::string label = std::string(className(detection.class_id)) + " " +
+                                  cv::format("%.2f", detection.score);
+        const cv::Point label_origin(detection.box.x,
+                                     std::max(detection.box.y - 5, 12));
+        cv::putText(perspective, label, label_origin, cv::FONT_HERSHEY_SIMPLEX,
+                    0.4, cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
+    }
+
+    const std::filesystem::path output_path =
+        std::filesystem::path("debug_output") / ("view_" + std::to_string(view_id) + ".jpg");
+    if (!cv::imwrite(output_path.string(), perspective))
+        throw std::runtime_error("Failed to write debug image: " + output_path.string());
+}
+
 void printMerged(const std::vector<GlobalDetection>& raw)
 {
     const auto merged = mergeDetections(raw);
@@ -83,14 +107,16 @@ int main(int argc, char* argv[])
         // multi thread
         cv::setNumThreads(config::OPENCV_THREADS);
 
-        const std::string model_path = argc == 3 ? argv[2] : config::MODEL_PATH;
-        std::cout << "OpenCV threads: " << cv::getNumThreads() << '\n'
-                  << "Loading YOLOX-Nano: " << model_path << '\n';
+        const std::string model_path = (argc == 3 ? argv[2] : config::MODEL_PATH);
+        std::cout << "OpenCV threads: " << cv::getNumThreads() << '\n' << "Loading YOLOX-Nano: " << model_path << '\n';
 
         // class init (constructor)
         YoloXDetector detector(model_path);
         RtspCapture capture(argv[1], Decoder::Hardware);
         Dewarper dewarper;
+
+        if constexpr (config::SAVE_DEBUG_IMAGES)
+            std::filesystem::create_directories("debug_output");
 
         std::vector<GlobalDetection> cycle_detections;
         int current_view = 0;
@@ -125,6 +151,9 @@ int main(int argc, char* argv[])
 
             DetectionResult result = detector.detect(perspective);
             const auto processing_end = Clock::now();
+
+            if constexpr (config::SAVE_DEBUG_IMAGES)
+                saveDebugImage(perspective, result, current_view);
 
             // projection inverse
             std::vector<GlobalAngles> angles;

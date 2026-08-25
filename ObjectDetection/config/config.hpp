@@ -20,6 +20,7 @@ inline constexpr float MERGE_PITCH_THRESHOLD = 5.0F;
 
 inline constexpr int DETECTION_FPS = 5;
 inline constexpr int OPENCV_THREADS = 4;
+inline constexpr bool SAVE_DEBUG_IMAGES = false;
 inline constexpr std::array<float, 4> VIEW_YAWS = {0.0F, 90.0F, 180.0F, -90.0F};
 inline constexpr std::size_t VIEW_COUNT = VIEW_YAWS.size();
 inline constexpr const char* MODEL_PATH = "models/yolox_nano.onnx";
