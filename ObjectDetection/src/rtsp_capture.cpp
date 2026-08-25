@@ -59,11 +59,14 @@ RtspFrame::operator bool() const
     return impl_ != nullptr;
 }
 
+// constructor
 RtspCapture::RtspCapture(const std::string& url, Decoder decoder) : impl_(std::make_unique<Impl>())
 {
     gst_init(nullptr, nullptr);
+
     gchar* escaped_url = g_strescape(url.c_str(), nullptr);
-    const std::string decoder_element = decoder == Decoder::Hardware ? "v4l2h264dec" : "avdec_h264";
+
+    const std::string decoder_element = (decoder == Decoder::Hardware ? "v4l2h264dec" : "avdec_h264");
     const std::string pipeline_description =
         "rtspsrc location=\"" + std::string(escaped_url) +
         "\" latency=0 drop-on-latency=true protocols=tcp ! "
@@ -76,16 +79,22 @@ RtspCapture::RtspCapture(const std::string& url, Decoder decoder) : impl_(std::m
         std::to_string(config::DETECTION_FPS) + "/1 ! "
         "videoconvert ! video/x-raw,format=BGR ! "
         "appsink name=sink max-buffers=1 drop=true sync=false";
+
     g_free(escaped_url);
 
     GError* error = nullptr;
     impl_->pipeline = gst_parse_launch(pipeline_description.c_str(), &error);
-    if (!impl_->pipeline) {
-        const std::string message = error ? error->message : "unknown error";
-        if (error)
-            g_error_free(error);
+    if (error) {
+        const std::string message = error->message;
+        if (impl_->pipeline) {
+            gst_object_unref(impl_->pipeline);
+            impl_->pipeline = nullptr;
+        }
+        g_error_free(error);
         throw std::runtime_error("Failed to create GStreamer pipeline: " + message);
     }
+    if (!impl_->pipeline)
+        throw std::runtime_error("Failed to create GStreamer pipeline: unknown error");
 
     impl_->sink_element = gst_bin_get_by_name(GST_BIN(impl_->pipeline), "sink");
     if (!impl_->sink_element)
@@ -97,41 +106,46 @@ RtspCapture::RtspCapture(const std::string& url, Decoder decoder) : impl_(std::m
         throw std::runtime_error("Failed to start GStreamer pipeline");
 }
 
+// destructor
 RtspCapture::~RtspCapture() = default;
 
 RtspFrame RtspCapture::pullFrame(unsigned int timeout_ms)
 {
-    GstSample* sample = gst_app_sink_try_pull_sample(
-        impl_->sink, static_cast<GstClockTime>(timeout_ms) * GST_MSECOND);
+    GstSample* sample = gst_app_sink_try_pull_sample(impl_->sink, static_cast<GstClockTime>(timeout_ms) * GST_MSECOND);
+
     if (!sample)
         return {};
 
     auto frame = std::make_unique<RtspFrame::Impl>();
     frame->sample = sample;
     frame->buffer = gst_sample_get_buffer(sample);
+
     GstCaps* caps = gst_sample_get_caps(sample);
     GstVideoInfo video_info{};
+
     if (!caps || !frame->buffer || !gst_video_info_from_caps(&video_info, caps))
         return {};
     if (GST_VIDEO_INFO_FORMAT(&video_info) != GST_VIDEO_FORMAT_BGR)
         return {};
     if (!gst_buffer_map(frame->buffer, &frame->map_info, GST_MAP_READ))
         return {};
+
     frame->mapped = true;
 
     const int width = GST_VIDEO_INFO_WIDTH(&video_info);
     const int height = GST_VIDEO_INFO_HEIGHT(&video_info);
     const int stride = GST_VIDEO_INFO_PLANE_STRIDE(&video_info, 0);
     const std::size_t offset = GST_VIDEO_INFO_PLANE_OFFSET(&video_info, 0);
+
     frame->image = cv::Mat(height, width, CV_8UC3, frame->map_info.data + offset, stride);
+
     return RtspFrame(std::move(frame));
 }
 
 bool RtspCapture::checkError(std::string& message)
 {
     GstBus* bus = gst_element_get_bus(impl_->pipeline);
-    GstMessage* event = gst_bus_pop_filtered(
-        bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
+    GstMessage* event = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
     gst_object_unref(bus);
     if (!event)
         return false;

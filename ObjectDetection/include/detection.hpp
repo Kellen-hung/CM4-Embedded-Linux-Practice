@@ -8,6 +8,11 @@ struct Detection {
     cv::Rect box;
 };
 
+struct GlobalAngles {
+    float yaw;
+    float pitch;
+};
+
 struct GlobalDetection {
     int class_id;
     float score;

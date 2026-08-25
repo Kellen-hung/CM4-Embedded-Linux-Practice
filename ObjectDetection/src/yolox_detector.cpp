@@ -44,6 +44,8 @@ DetectionResult YoloXDetector::detect(const cv::Mat& perspective_view)
 {
     if (perspective_view.cols != config::VIEW_WIDTH || perspective_view.rows != config::VIEW_HEIGHT)
         throw std::invalid_argument("YOLOX expects a 416x312 perspective view");
+    if (perspective_view.type() != CV_8UC3)
+        throw std::invalid_argument("YOLOX expects a CV_8UC3 BGR perspective view");
 
     DetectionResult result;
     const auto preprocess_start = Clock::now();
@@ -52,9 +54,8 @@ DetectionResult YoloXDetector::detect(const cv::Mat& perspective_view)
     cv::Mat blob;
     cv::dnn::blobFromImage(canvas_, blob, 1.0, cv::Size(config::MODEL_WIDTH, config::MODEL_HEIGHT),
                            cv::Scalar(), false, false);
-    const auto preprocess_end = Clock::now();
-
     net_.setInput(blob);
+    const auto preprocess_end = Clock::now();
     const auto inference_start = Clock::now();
     cv::Mat output = net_.forward();
     const auto inference_end = Clock::now();
@@ -105,7 +106,8 @@ std::vector<Detection> YoloXDetector::postprocess(const cv::Mat& output) const
     }
 
     std::vector<int> indices;
-    cv::dnn::NMSBoxes(boxes, scores, config::SCORE_THRESHOLD, config::NMS_THRESHOLD, indices);
+    cv::dnn::NMSBoxesBatched(boxes, scores, class_ids, config::SCORE_THRESHOLD,
+                             config::NMS_THRESHOLD, indices);
     std::vector<Detection> detections;
     for (int index : indices) {
         cv::Rect box = boxes[index] & cv::Rect(0, 0, config::VIEW_WIDTH, config::VIEW_HEIGHT);

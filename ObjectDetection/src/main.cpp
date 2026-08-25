@@ -10,18 +10,22 @@
 #include <csignal>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <vector>
 
+// anything in namespace will not be seen by other .cpp
 namespace {
 volatile sig_atomic_t running = 1;
 using Clock = std::chrono::steady_clock;
 
+// secure signal processing
 void signalHandler(int)
 {
     running = 0;
 }
 
+// benchmark
 double elapsedMs(Clock::time_point start, Clock::time_point end)
 {
     return std::chrono::duration<double, std::milli>(end - start).count();
@@ -40,7 +44,9 @@ const char* className(int class_id)
         "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
         "hair drier", "toothbrush"
     };
-    return class_id >= 0 && class_id < 80 ? NAMES[class_id] : "unknown";
+    if (class_id < 0 || class_id >= static_cast<int>(std::size(NAMES)))
+        return "unknown";
+    return NAMES[class_id];
 }
 
 void printMerged(const std::vector<GlobalDetection>& raw)
@@ -68,21 +74,29 @@ int main(int argc, char* argv[])
         struct sigaction action {};
         action.sa_handler = signalHandler;
         sigemptyset(&action.sa_mask);
+
+        // Ctrl + C
         sigaction(SIGINT, &action, nullptr);
+        // systemd kill
         sigaction(SIGTERM, &action, nullptr);
 
+        // multi thread
         cv::setNumThreads(config::OPENCV_THREADS);
+
         const std::string model_path = argc == 3 ? argv[2] : config::MODEL_PATH;
         std::cout << "OpenCV threads: " << cv::getNumThreads() << '\n'
                   << "Loading YOLOX-Nano: " << model_path << '\n';
 
+        // class init (constructor)
         YoloXDetector detector(model_path);
         RtspCapture capture(argv[1], Decoder::Hardware);
         Dewarper dewarper;
+
         std::vector<GlobalDetection> cycle_detections;
         int current_view = 0;
 
         while (running) {
+            // timeout = 200 (ms)
             RtspFrame frame = capture.pullFrame(200);
             if (!frame) {
                 std::string error;
@@ -94,6 +108,8 @@ int main(int argc, char* argv[])
             }
 
             const cv::Mat& panorama = frame.image();
+
+            // for Dynamic resolution
             if (dewarper.ensureMaps(panorama.cols, panorama.rows)) {
                 std::cout << "RTSP frame: " << panorama.cols << 'x' << panorama.rows
                           << "; projection maps rebuilt for 4 views\n";
@@ -101,17 +117,22 @@ int main(int argc, char* argv[])
                 cycle_detections.clear();
             }
 
-            const auto total_start = Clock::now();
+            const auto processing_start = Clock::now();
+
             const auto remap_start = Clock::now();
             cv::Mat perspective = dewarper.dewarp(panorama, current_view);
             const auto remap_end = Clock::now();
-            DetectionResult result = detector.detect(perspective);
-            const auto total_end = Clock::now();
 
-            std::vector<std::pair<float, float>> angles;
+            DetectionResult result = detector.detect(perspective);
+            const auto processing_end = Clock::now();
+
+            // projection inverse
+            std::vector<GlobalAngles> angles;
             angles.reserve(result.detections.size());
             for (const auto& detection : result.detections)
                 angles.push_back(dewarper.globalAngles(detection.box, current_view));
+
+
             auto global = toGlobalDetections(result.detections, current_view, angles);
             cycle_detections.insert(cycle_detections.end(), global.begin(), global.end());
 
@@ -121,13 +142,15 @@ int main(int argc, char* argv[])
                       << " pre=" << result.preprocess_ms
                       << " infer=" << result.inference_ms
                       << " post=" << result.postprocess_ms
-                      << " total=" << elapsedMs(total_start, total_end) << " ms";
+                      << " processing=" << elapsedMs(processing_start, processing_end) << " ms";
+
             for (const auto& detection : global) {
                 std::cout << "  [" << className(detection.class_id) << ' ' << detection.score
                           << " yaw=" << detection.yaw << "deg pitch=" << detection.pitch << "deg]";
             }
             std::cout << '\n';
 
+            // merge
             if (current_view == static_cast<int>(config::VIEW_YAWS.size()) - 1) {
                 printMerged(cycle_detections);
                 cycle_detections.clear();

@@ -13,11 +13,11 @@ constexpr double PI = 3.14159265358979323846;
 
 bool Dewarper::ensureMaps(int source_width, int source_height)
 {
-    if (source_width == source_width_ && source_height == source_height_)
-        return false;
-
     if (source_width <= 0 || source_height <= 0)
         throw std::invalid_argument("Invalid source resolution");
+
+    if (source_width == source_width_ && source_height == source_height_)
+        return false;
 
     for (std::size_t i = 0; i < maps_.size(); ++i)
         buildMap(maps_[i], source_width, source_height, config::VIEW_YAWS[i]);
@@ -75,7 +75,7 @@ cv::Mat Dewarper::dewarp(const cv::Mat& source, int view_id) const
     return output;
 }
 
-std::pair<float, float> Dewarper::globalAngles(const cv::Rect& box, int view_id) const
+GlobalAngles Dewarper::globalAngles(const cv::Rect& box, int view_id) const
 {
     const double center_x = box.x + box.width / 2.0;
     const double center_y = box.y + box.height / 2.0;

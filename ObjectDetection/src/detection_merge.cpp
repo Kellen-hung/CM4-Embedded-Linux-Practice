@@ -14,16 +14,13 @@ float normalizeYaw(float yaw)
 
 float yawDistance(float a, float b)
 {
-    float difference = std::fabs(a - b);
-    if (difference > 180.0F)
-        difference = 360.0F - difference;
-    return difference;
+    return std::fabs(normalizeYaw(a - b));
 }
 
 std::vector<GlobalDetection> toGlobalDetections(
     const std::vector<Detection>& detections,
     int view_id,
-    const std::vector<std::pair<float, float>>& angles)
+    const std::vector<GlobalAngles>& angles)
 {
     if (detections.size() != angles.size())
         throw std::invalid_argument("Detection and angle counts differ");
@@ -31,7 +28,7 @@ std::vector<GlobalDetection> toGlobalDetections(
     result.reserve(detections.size());
     for (std::size_t i = 0; i < detections.size(); ++i)
         result.push_back({detections[i].class_id, detections[i].score,
-                          normalizeYaw(angles[i].first), angles[i].second, view_id});
+                          normalizeYaw(angles[i].yaw), angles[i].pitch, view_id});
     return result;
 }
 
@@ -42,6 +39,8 @@ std::vector<GlobalDetection> mergeDetections(const std::vector<GlobalDetection>&
         int duplicate_index = -1;
         for (int i = 0; i < static_cast<int>(merged.size()); ++i) {
             if (merged[i].class_id != detection.class_id)
+                continue;
+            if (merged[i].view_id == detection.view_id)
                 continue;
             if (yawDistance(merged[i].yaw, detection.yaw) >= config::MERGE_YAW_THRESHOLD)
                 continue;
